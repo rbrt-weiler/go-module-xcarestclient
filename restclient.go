@@ -121,6 +121,20 @@ func (c *RESTClient) PostRequest(endpoint string, payload []byte) (*http.Request
 	return req, nil
 }
 
+// PutRequest returns a prepared HTTP PUT request instance.
+func (c *RESTClient) PutRequest(endpoint string, payload []byte) (*http.Request, error) {
+	SanitizeEndpoint(&endpoint)
+	endpointURL := fmt.Sprintf("https://%s:%d%s", c.HTTPHost, c.HTTPPort, endpoint)
+
+	req, reqErr := http.NewRequest(http.MethodPut, endpointURL, bytes.NewBuffer(payload))
+	if reqErr != nil {
+		return req, fmt.Errorf("could not create request: %s", reqErr)
+	}
+	SetRequestHeaders(c, req, &payload)
+
+	return req, nil
+}
+
 // GetRequest returns a prepared HTTP GET request instance.
 func (c *RESTClient) GetRequest(endpoint string) (*http.Request, error) {
 	SanitizeEndpoint(&endpoint)
