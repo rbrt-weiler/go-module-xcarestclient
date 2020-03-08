@@ -135,6 +135,20 @@ func (c *RESTClient) GetRequest(endpoint string) (*http.Request, error) {
 	return req, nil
 }
 
+// DeleteRequest returns a prepared HTTP DELETE request instance.
+func (c *RESTClient) DeleteRequest(endpoint string) (*http.Request, error) {
+	SanitizeEndpoint(&endpoint)
+	endpointURL := fmt.Sprintf("https://%s:%d%s", c.HTTPHost, c.HTTPPort, endpoint)
+
+	req, reqErr := http.NewRequest(http.MethodDelete, endpointURL, nil)
+	if reqErr != nil {
+		return req, fmt.Errorf("could not create request: %s", reqErr)
+	}
+	SetRequestHeaders(c, req, nil)
+
+	return req, nil
+}
+
 // PerformRequest sends a request to XCA and returns the result.
 func (c *RESTClient) PerformRequest(req *http.Request) (*http.Response, error) {
 	return c.httpClient.Do(req)
