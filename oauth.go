@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// TokenRequest is the data structure required for authentication against XCA.
 type TokenRequest struct {
 	GrantType string `json:"grantType"`
 	UserID    string `json:"userId"`
@@ -15,6 +16,7 @@ type TokenRequest struct {
 	Scope     string `json:"scope"`
 }
 
+// OAuthToken stores a plain access token along with its decoded fields.
 type OAuthToken struct {
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
@@ -38,6 +40,7 @@ type OAuthToken struct {
 	TokenSignature []byte
 }
 
+// Decode decodes a raw OAuth token into the OAuthToken structure.
 func (t *OAuthToken) Decode() error {
 	tokenFields := strings.Split(t.AccessToken, ".")
 

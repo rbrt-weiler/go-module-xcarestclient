@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+// RESTClient encapsulates the actual HTTP client that communicates with XCA.
+// Use New() to obtain an usable instance. All fields should be treated as read-only; functions are provided where changes shall be possible.
 type RESTClient struct {
 	httpClient  http.Client
 	HTTPHost    string
@@ -22,6 +24,8 @@ type RESTClient struct {
 	OAuth       OAuthToken
 }
 
+// New is used to create an usable instance of RESTClient.
+// By default a new instance will use HTTPS to port 5825 with strict certificate checking. The HTTP timeout is set to 5 seconds. Authentication must be set manually before trying to send a query to XCA.
 func New(host string) RESTClient {
 	var c RESTClient
 
@@ -35,6 +39,7 @@ func New(host string) RESTClient {
 	return c
 }
 
+// SetPort sets the TCP port where XCA is listening for the RESTClient instance.
 func (c *RESTClient) SetPort(port uint) error {
 	if httpMinPort <= port && httpMaxPort >= port {
 		c.HTTPPort = port
@@ -43,6 +48,7 @@ func (c *RESTClient) SetPort(port uint) error {
 	return fmt.Errorf("port out of range (%d - %d)", httpMinPort, httpMaxPort)
 }
 
+// SetTimeout sets the HTTP timeout in seconds for the RESTClient instance.
 func (c *RESTClient) SetTimeout(seconds uint) error {
 	if httpMinTimeout <= seconds && httpMaxTimeout >= seconds {
 		c.httpClient.Timeout = time.Second * time.Duration(seconds)
@@ -51,6 +57,7 @@ func (c *RESTClient) SetTimeout(seconds uint) error {
 	return fmt.Errorf("timeout out of range (%d - %d)", httpMinTimeout, httpMaxTimeout)
 }
 
+// UseSecureHTTPS enforces strict HTTPS certificate checking.
 func (c *RESTClient) UseSecureHTTPS() {
 	httpTransport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
@@ -58,6 +65,7 @@ func (c *RESTClient) UseSecureHTTPS() {
 	c.httpClient.Transport = httpTransport
 }
 
+// UseInsecureHTTPS disables strict HTTPS certificate checking.
 func (c *RESTClient) UseInsecureHTTPS() {
 	httpTransport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -65,15 +73,18 @@ func (c *RESTClient) UseInsecureHTTPS() {
 	c.httpClient.Transport = httpTransport
 }
 
+// SetUserAgent sets the User-Agent HTTP header.
 func (c *RESTClient) SetUserAgent(ua string) {
 	c.UserAgent = ua
 }
 
+// SetAuth sets the authentication credentials.
 func (c *RESTClient) SetAuth(userID string, secret string) {
 	c.xcaUserID = userID
 	c.xcaSecret = secret
 }
 
+// SanitizeEndpoint prepares the provided API endpoint for concatenation.
 func SanitizeEndpoint(endpoint *string) {
 	if !strings.HasPrefix(*endpoint, "/") {
 		*endpoint = fmt.Sprintf("/%s", *endpoint)
@@ -83,6 +94,7 @@ func SanitizeEndpoint(endpoint *string) {
 	}
 }
 
+// SetRequestHeaders sets the usual headers required for requests to XCA.
 func SetRequestHeaders(client *RESTClient, req *http.Request, payload *[]byte) {
 	req.Header.Set("User-Agent", client.UserAgent)
 	req.Header.Set("Cache-Control", "no-cache")
@@ -95,6 +107,7 @@ func SetRequestHeaders(client *RESTClient, req *http.Request, payload *[]byte) {
 	}
 }
 
+// PostRequest returns a prepared HTTP POST request instance.
 func (c *RESTClient) PostRequest(endpoint string, payload []byte) (*http.Request, error) {
 	SanitizeEndpoint(&endpoint)
 	endpointURL := fmt.Sprintf("https://%s:%d%s", c.HTTPHost, c.HTTPPort, endpoint)
@@ -108,6 +121,7 @@ func (c *RESTClient) PostRequest(endpoint string, payload []byte) (*http.Request
 	return req, nil
 }
 
+// GetRequest returns a prepared HTTP GET request instance.
 func (c *RESTClient) GetRequest(endpoint string, payload []byte) (*http.Request, error) {
 	SanitizeEndpoint(&endpoint)
 	endpointURL := fmt.Sprintf("https://%s:%d%s", c.HTTPHost, c.HTTPPort, endpoint)
@@ -121,10 +135,12 @@ func (c *RESTClient) GetRequest(endpoint string, payload []byte) (*http.Request,
 	return req, nil
 }
 
+// PerformRequest sends a request to XCA and returns the result.
 func (c *RESTClient) PerformRequest(req *http.Request) (*http.Response, error) {
 	return c.httpClient.Do(req)
 }
 
+// Authenticate performs authentication against XCA and stores the OAuth token.
 func (c *RESTClient) Authenticate() error {
 	// Empty token structure to start with.
 	var tokenData OAuthToken

@@ -1,3 +1,4 @@
+// Package xcarestclient interfaces with the REST API of ExtremeCloud Appliance.
 package xcarestclient
 
 const (
