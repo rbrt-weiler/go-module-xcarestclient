@@ -42,30 +42,33 @@ type OAuthToken struct {
 
 // Decode decodes a raw OAuth token into the OAuthToken structure.
 func (t *OAuthToken) Decode() error {
+	var data []byte
+	var err error
+
 	tokenFields := strings.Split(t.AccessToken, ".")
 
-	if tokenHeader, thErr := base64.RawURLEncoding.DecodeString(tokenFields[0]); thErr != nil {
-		return fmt.Errorf("could not base64 decode token header: %s", thErr)
-	} else {
-		if headerErr := json.Unmarshal(tokenHeader, &t.TokenHeader); headerErr != nil {
-			return fmt.Errorf("could not decode token header: %s", headerErr)
-		}
+	// Header
+	if data, err = base64.RawURLEncoding.DecodeString(tokenFields[0]); err != nil {
+		return fmt.Errorf("could not base64 decode token header: %s", err)
+	}
+	if err = json.Unmarshal(data, &t.TokenHeader); err != nil {
+		return fmt.Errorf("could not decode token header: %s", err)
 	}
 
-	if tokenPayload, tpErr := base64.RawURLEncoding.DecodeString(tokenFields[1]); tpErr != nil {
-		return fmt.Errorf("could not base64 decode token payload: %s", tpErr)
-	} else {
-		if payloadErr := json.Unmarshal(tokenPayload, &t.TokenPayload); payloadErr != nil {
-			return fmt.Errorf("could not decode token payload: %s", payloadErr)
-		}
-		t.TokenPayload.ExpiresAt = time.Unix(t.TokenPayload.ExpiresAtUnixfmt, 0)
+	// Payload
+	if data, err = base64.RawURLEncoding.DecodeString(tokenFields[1]); err != nil {
+		return fmt.Errorf("could not base64 decode token payload: %s", err)
 	}
+	if err = json.Unmarshal(data, &t.TokenPayload); err != nil {
+		return fmt.Errorf("could not decode token payload: %s", err)
+	}
+	t.TokenPayload.ExpiresAt = time.Unix(t.TokenPayload.ExpiresAtUnixfmt, 0)
 
-	if tokenSignature, tsErr := base64.RawURLEncoding.DecodeString(tokenFields[2]); tsErr != nil {
-		return fmt.Errorf("could not base64 decode token signature: %s", tsErr)
-	} else {
-		t.TokenSignature = tokenSignature
+	// Signature
+	if data, err = base64.RawURLEncoding.DecodeString(tokenFields[2]); err != nil {
+		return fmt.Errorf("could not base64 decode token signature: %s", err)
 	}
+	t.TokenSignature = data
 
 	return nil
 }
