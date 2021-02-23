@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -203,7 +203,7 @@ func (c *RESTClient) Authenticate() error {
 	}
 
 	// Read and parse the body of the HTTP response.
-	body, bodyErr := ioutil.ReadAll(res.Body)
+	body, bodyErr := io.ReadAll(res.Body)
 	if bodyErr != nil {
 		return fmt.Errorf("could not read server response: %s", bodyErr)
 	}
